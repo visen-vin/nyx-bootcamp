@@ -43,7 +43,7 @@ git push origin <yourname>-day-N
 # then open a Pull Request on GitHub from your branch into main
 ```
 
-No need to be a collaborator — fork the repo if you don't have push access, and open the PR from your fork.
+No need to be a collaborator — fork the repo if you don't have push access, and open the PR from.
 
 
 this is dummy commit 
