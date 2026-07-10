@@ -1,4 +1,4 @@
-# Mentor Squad — Daily Practice
+# Nyx Bootcamp — Daily Practice
 
 Daily practice repo for **Gaurav**, **Vishal**, **Ashish**, and **Nishant**.
 
@@ -22,22 +22,22 @@ DSA/Solution/Day-N-<topic>/SOLUTION.md          — official brute-force + optim
 ## How it works
 
 1. Every morning, a new `Day-N-<topic>` folder appears in each of the four categories.
-2. Do the assignment / solve the DSA question, then open a **Pull Request** adding your own file inside the matching `Assignment/` or `DSA/Question/` folder, named after yourself (e.g. `Gaurav.md` or `Gaurav.py`).
+2. Fill in your `DAY<N>_<YourName>.md` placeholder (already created for you in the matching `Assignment/` or `DSA/Question/` folder), then open a **Pull Request**.
 3. At day's end, `DSA/Solution/Day-N-<topic>/SOLUTION.md` is published with both a **brute-force** and an **optimal** solution, so you can compare your approach.
 
 ## How to submit (PR workflow)
 
 ```bash
 # one-time setup
-git clone https://github.com/visen-vin/mentor-squad-dsa.git
-cd mentor-squad-dsa
+git clone https://github.com/visen-vin/nyx-bootcamp.git
+cd nyx-bootcamp
 
 # each day, e.g. for the DSA question
 git checkout -b <yourname>-day-N
-# add your file inside the matching Day-N folder, e.g.:
-#   DSA/Question/Day-N-<topic>/<YourName>.md
-#   Frontend/Assignment/Day-N-<topic>/<YourName>.md
-git add DSA/Question/Day-N-<topic>/<YourName>.md
+# fill in your placeholder inside the matching Day-N folder, e.g.:
+#   DSA/Question/Day-N-<topic>/DAY<N>_<YourName>.md
+#   Frontend/Assignment/Day-N-<topic>/DAY<N>_<YourName>.md
+git add DSA/Question/Day-N-<topic>/DAY<N>_<YourName>.md
 git commit -m "Day N: <YourName> submission"
 git push origin <yourname>-day-N
 # then open a Pull Request on GitHub from your branch into main
