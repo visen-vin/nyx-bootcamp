@@ -222,10 +222,22 @@ ssh root@187.127.156.138 "cat /root/.openclaw/workspace-mentor_squad/repo_conten
 - [ ] **Step 2: Set up an isolated test repo clone on the VPS (once, reused by this task's tests)**
 
 ```bash
-ssh root@187.127.156.138 "rm -rf /root/mentor-squad-dsa-test && cp -r /root/mentor-squad-dsa /root/mentor-squad-dsa-test && cd /root/mentor-squad-dsa-test && git remote remove origin"
+ssh root@187.127.156.138 "
+rm -rf /root/mentor-squad-dsa-test /root/mentor-squad-dsa-test-bare
+git init --bare -q /root/mentor-squad-dsa-test-bare
+cp -r /root/mentor-squad-dsa /root/mentor-squad-dsa-test
+cd /root/mentor-squad-dsa-test
+git remote remove origin
+git remote add origin /root/mentor-squad-dsa-test-bare
+git push -q origin main
+"
 ```
 
-Removing `origin` on the test clone guarantees a bug in the test run can never accidentally `git push` to the real GitHub repo.
+Pointing `origin` at a local bare repo (instead of removing it) guarantees the
+test run can never reach the real GitHub repo, while still letting
+`cmd_create_day`'s `git push` succeed (it needs a working `origin` to push
+to — removing the remote entirely makes `git pull --rebase` / `git push`
+fail with "does not appear to be a git repository").
 
 - [ ] **Step 3: Write the failing test**
 
@@ -421,7 +433,17 @@ And inside the `if idx < len(questions):` branch of the DSA section, right after
 ```bash
 scp /private/tmp/claude-501/-Users-vin/ed0ccc34-a8fe-4de8-b5e0-87beb62c0f36/scratchpad/repo_content_engine.py \
   root@187.127.156.138:/root/.openclaw/workspace-mentor_squad/repo_content_engine.py
-ssh root@187.127.156.138 "rm -rf /root/mentor-squad-dsa-test && cp -r /root/mentor-squad-dsa /root/mentor-squad-dsa-test && cd /root/mentor-squad-dsa-test && git remote remove origin && cd /root/.openclaw/workspace-mentor_squad && python3 test_repo_content_engine.py"
+ssh root@187.127.156.138 "
+rm -rf /root/mentor-squad-dsa-test /root/mentor-squad-dsa-test-bare
+git init --bare -q /root/mentor-squad-dsa-test-bare
+cp -r /root/mentor-squad-dsa /root/mentor-squad-dsa-test
+cd /root/mentor-squad-dsa-test
+git remote remove origin
+git remote add origin /root/mentor-squad-dsa-test-bare
+git push -q origin main
+cd /root/.openclaw/workspace-mentor_squad
+python3 test_repo_content_engine.py
+"
 ```
 
 Expected: `ALL PASS`.
@@ -429,7 +451,7 @@ Expected: `ALL PASS`.
 - [ ] **Step 7: Clean up test artifacts**
 
 ```bash
-ssh root@187.127.156.138 "rm -rf /root/mentor-squad-dsa-test /root/.openclaw/workspace-mentor_squad/content_progress.test.json /root/.openclaw/workspace-mentor_squad/test_repo_content_engine.py"
+ssh root@187.127.156.138 "rm -rf /root/mentor-squad-dsa-test /root/mentor-squad-dsa-test-bare /root/.openclaw/workspace-mentor_squad/content_progress.test.json /root/.openclaw/workspace-mentor_squad/test_repo_content_engine.py"
 ```
 
 Do **not** run `repo_content_engine.py create-day` against the live `/root/mentor-squad-dsa` as part of this task — the next real run happens naturally at 8:30 AM IST via the existing `daily-repo-content` cron job, and will pick up these edits automatically.
