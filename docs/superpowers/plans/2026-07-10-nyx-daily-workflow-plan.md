@@ -865,8 +865,16 @@ ssh root@187.127.156.138 'openclaw cron create \
   --message "Run \`gh pr list --json number\` in ~/mentor-squad-dsa to find open PRs. For each PR number, run \`python3 pr_engine.py check-pr --number <n>\` in this workspace directory (this safety-gates and auto-merges if eligible — you do not decide merge eligibility yourself). Regardless of the merge outcome, fetch the diff with \`gh pr diff <n>\` in ~/mentor-squad-dsa and post a direct, unsparingly honest code-review comment with \`gh pr comment <n> --body \"...\"\` — call out bugs, bad complexity, sloppy naming, missed edge cases. Skip PRs you already commented on (check with \`gh pr view <n> --json comments\` first) so you do not repeat feedback every hour. After processing all open PRs, run \`python3 pr_engine.py update-tracker\` in this workspace directory to refresh TRACKER.md. Do not post anything to WhatsApp from this job — PR feedback lives on GitHub only; the on-demand WhatsApp case (IDENTITY.md case 5) handles the WhatsApp-visible short reply separately." \
   --timeout-seconds 180 \
   --tools exec,read,write \
+  --no-deliver \
   --json'
 ```
+
+Without `--no-deliver`, the job defaults to `delivery.mode: "announce"` (fallback-delivers
+the agent's final response text to a chat) — that would risk leaking the PR
+review text to WhatsApp despite the message explicitly saying not to post
+there. `--no-deliver` matches the existing `dsa-daily-solution` job's
+`delivery.mode: "none"`. Verify this with `openclaw cron create ... --json`
+and check the `delivery.mode` field in the output before trusting it.
 
 - [ ] **Step 6: Verify the cron job was created correctly**
 
