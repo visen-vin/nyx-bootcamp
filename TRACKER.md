@@ -1,6 +1,6 @@
 | Person | Current Day | Track | CS-Core | DSA | Last Merged Day |
 |---|---|---|---|---|---|
-| Gaurav | 3 | ⬜ | ⬜ | ⬜ | 0 |
-| Vishal | 3 | ⬜ | ⬜ | ⬜ | 0 |
-| Ashish | 3 | ⬜ | ⬜ | ⬜ | 0 |
-| Nishant | 3 | ⬜ | ⬜ | ⬜ | 0 |
+| Gaurav | 4 | ⬜ | ⬜ | ⬜ | 0 |
+| Vishal | 4 | ⬜ | ⬜ | ⬜ | 0 |
+| Ashish | 4 | ⬜ | ⬜ | ⬜ | 0 |
+| Nishant | 4 | ⬜ | ⬜ | ⬜ | 0 |
