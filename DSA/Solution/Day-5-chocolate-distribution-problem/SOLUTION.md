@@ -1,105 +1,115 @@
-# Solution: Chocolate Distribution Problem
+# Day 5 — Chocolate Distribution Problem
 
-> **Problem:** Given an array `arr` of `n` integers where each value represents the number of chocolates in a packet, and an integer `m` (number of students), distribute packets such that:
-> - Each student gets **exactly one** packet.
-> - The **difference** between the packet with the most chocolates and the packet with the least chocolates given to the students is **minimized**.
->
-> Return that minimum difference.
+## Problem Statement
+
+Given an array `arr` of `n` integers where each integer represents the number of chocolates in a packet, and an integer `m` representing the number of students, distribute the packets such that:
+
+1. Each student gets **exactly one** packet.
+2. The difference between the packet with the **most chocolates** and the packet with the **fewest chocolates** given to the students is **minimized**.
+
+Return that minimum difference.
+
+**Constraints:**
+- `1 <= m <= n <= 10^5`
+- `0 <= arr[i] <= 10^9`
 
 ---
 
 ## Approach 1: Brute Force
 
-**Idea:** Generate all combinations of `m` packets from `n` packets, compute the max-min difference for each, and track the minimum.
+### Intuition
+Generate every possible combination of `m` packets from `n` packets. For each combination, find the max and min values and compute the difference. Track the minimum difference across all combinations.
 
-### Code
+### Code (Python)
 
 ```python
 from itertools import combinations
 
-def find_min_diff_brute(arr, m):
+def chocolate_distribution_brute(arr, m):
+    if m == 0 or len(arr) < m:
+        return 0
+
     n = len(arr)
-    if m > n:
-        return -1  # Not enough packets
+    min_diff = float('inf')
 
-    min_diff = float("inf")
-
-    for combo in combinations(arr, m):
-        diff = max(combo) - min(combo)
-        min_diff = min(min_diff, diff)
+    for subset in combinations(arr, m):
+        diff = max(subset) - min(subset)
+        if diff < min_diff:
+            min_diff = diff
 
     return min_diff
 ```
 
 ### Complexity
 
-| Metric | Value |
-|--------|-------|
-| **Time** | O(n! / (m! × (n-m)!)) — combinatorial explosion; completely impractical for moderate `n`. |
-| **Space** | O(m) for each combination tuple (ignoring recursion/intermediate storage). |
+| Metric        | Value              |
+|---------------|--------------------|
+| **Time**      | O(C(n, m) * m)     |
+| **Space**     | O(m)               |
+
+The number of combinations grows factorially — completely infeasible for `n` up to `10^5`.
 
 ---
 
 ## Approach 2: Optimal (Sorting + Sliding Window)
 
-**Idea:** Sort the array. Once sorted, any contiguous subarray of size `m` gives the smallest possible spread for that set of elements. Slide a window of size `m` over the sorted array and take the minimum of `arr[i+m-1] - arr[i]`.
+### Intuition
+If the array is sorted, any contiguous subarray of size `m` represents a valid distribution where the **minimum difference** between max and min in that window is simply `arr[i + m - 1] - arr[i]`. We don't need to consider non-contiguous subsets because the subarray property of sorted arrays guarantees that the min and max of any group are the smallest and largest elements in that group — and the elements between them just add more candy, never reduce the diff. By sliding the window of size `m` across the sorted array, we find the global minimum in O(n log n) time.
 
-### Reasoning
-
-If you sort the packets, the most similar-sized packets will be neighbours. So the optimal `m` packets must be a contiguous block in the sorted order — otherwise, swapping a far-out packet for a nearer one would only reduce the difference.
-
-### Code
+### Code (Python)
 
 ```python
-def find_min_diff(arr, m):
-    n = len(arr)
-    if m > n or m == 0:
-        return -1
+def chocolate_distribution(arr, m):
+    if m == 0 or len(arr) < m:
+        return 0
 
     arr.sort()
-    min_diff = float("inf")
+    min_diff = float('inf')
 
-    for i in range(n - m + 1):
+    # Slide a window of size m across the sorted array
+    for i in range(len(arr) - m + 1):
         diff = arr[i + m - 1] - arr[i]
-        min_diff = min(min_diff, diff)
+        if diff < min_diff:
+            min_diff = diff
 
     return min_diff
 ```
 
 ### Complexity
 
-| Metric | Value |
-|--------|-------|
-| **Time** | O(n log n) — dominated by sorting. The single pass over the array is O(n). |
-| **Space** | O(1) extra (or O(n) if sorting uses extra space — Python's Timsort is O(n) auxiliary space in the worst case). |
+| Metric        | Value        |
+|---------------|--------------|
+| **Time**      | O(n log n)   |
+| **Space**     | O(1)         |
+
+**Why this works:** After sorting, the packets are ordered by chocolate count. For any subset of `m` packets, the smallest possible max-min difference is achieved by a **contiguous** segment of the sorted array — jumping gaps would only increase the spread. The sliding window checks every possible contiguous segment of length `m`.
 
 ---
 
-## Example
+## Test Cases
 
-```
-arr = [7, 3, 2, 4, 9, 12, 56], m = 3
+```python
+def test():
+    # Basic
+    assert chocolate_distribution([7, 3, 2, 4, 9, 12, 56], 3) == 2  # subarray [2, 3, 4]
+    # Single student
+    assert chocolate_distribution([7, 3, 2], 1) == 0                # any packet alone
+    # All same values
+    assert chocolate_distribution([5, 5, 5, 5], 2) == 0
+    # Large spread
+    assert chocolate_distribution([1, 2, 3, 100, 101], 2) == 1      # subarray [100, 101]
+    # m == n
+    assert chocolate_distribution([10, 20, 30], 3) == 20
+    # Edge: m == 0
+    assert chocolate_distribution([1, 2, 3], 0) == 0
 
-Sorted: [2, 3, 4, 7, 9, 12, 56]
+    print("All tests passed!")
 
-Windows:
-  [2, 3, 4] → 4 - 2 = 2   ← minimum
-  [3, 4, 7] → 7 - 3 = 4
-  [4, 7, 9] → 9 - 4 = 5
-  [7, 9, 12] → 12 - 7 = 5
-  [9, 12, 56] → 56 - 9 = 47
-
-Result: 2
+test()
 ```
 
 ---
 
-## Edge Cases
+## Key Insight
 
-| Case | Expected |
-|------|----------|
-| `m = 1` | Always `0` (one packet → no difference). |
-| `m = n` | `max(arr) - min(arr)` — the whole array's spread. |
-| `m > n` | Return `-1` — impossible to distribute. |
-| Duplicates | Works fine — sorting groups equal values together, difference becomes `0`. |
-| Single element | `m = 1` returns `0`. |
+The brute force approach enumerates combinations (exponential), while the optimal approach exploits **sorting + sliding window** to reduce the problem to a linear scan after sorting. Classic example of how a simple observation about ordering can collapse an exponential problem into a near-linear one.
