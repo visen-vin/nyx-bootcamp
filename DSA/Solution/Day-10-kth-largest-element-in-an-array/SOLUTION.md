@@ -1,115 +1,110 @@
 # Day 10 — Kth Largest Element in an Array
 
-## Problem
+**Problem:** Given an integer array `nums` and an integer `k`, return the *kth largest element* in the array.
 
-Given an integer array `nums` and an integer `k`, return the **kth largest element** in the array.
-
-> Note: It is the kth largest element in **sorted order**, not the kth distinct element.
+Note that it is the kth largest element in the sorted order, not the kth distinct element.
 
 ---
 
 ## Approach 1 — Brute Force (Sorting)
 
-**Idea:** Sort the array in descending order and pick the element at index `k-1`.
-
-### Complexity
-- **Time:** O(n log n) — dominated by sorting.
-- **Space:** O(1) or O(n) depending on the sort implementation (Python's Timsort uses O(n) auxiliary space in the worst case).
-
-### Code
+Sort the array in descending order, then pick the element at index `k-1`.
 
 ```python
-def findKthLargest_bruteforce(nums: list[int], k: int) -> int:
+def find_kth_largest_brute(nums: list[int], k: int) -> int:
     nums.sort(reverse=True)
     return nums[k - 1]
 ```
 
-That's it — one line. Simple but not optimal.
+**Time Complexity:** O(n log n) — dominated by sorting.  
+**Space Complexity:** O(1) or O(n) depending on the sort implementation (Python's Timsort uses O(n) auxiliary space in the worst case).
 
 ---
 
 ## Approach 2 — Optimal (Quickselect / Hoare's Selection Algorithm)
 
-**Idea:** Use the **Quickselect** algorithm — a variant of Quicksort that only recurses into the partition containing the kth largest element, giving average O(n) time.
+Quickselect is a selection algorithm based on the partition step of Quicksort. It repeatedly partitions the array around a pivot until the pivot lands at the (k-1)th position (0-indexed for kth largest). Since we want the kth *largest*, we partition in descending order.
 
-Since we want the **kth largest**, we can equivalently look for the **(n-k)th smallest** (0-indexed). Pick a pivot, partition the array, and recurse into only one side.
-
-### Complexity
-- **Time:** O(n) average, O(n²) worst-case (if pivot choices are unlucky — mitigated by random pivot).
-- **Space:** O(1) extra (in-place partitioning), O(log n) recursion stack average.
-
-### Code
+Average case is O(n), which is better than O(n log n) sorting.
 
 ```python
 import random
 
-def findKthLargest(nums: list[int], k: int) -> int:
-    # kth largest == (n - k)th smallest (0-indexed)
-    target_idx = len(nums) - k
+def find_kth_largest_optimal(nums: list[int], k: int) -> int:
+    # Convert to kth largest → kth smallest index for easier partitioning
+    # kth largest = nums[len - k] in ascending order
+    # But we can also partition in descending order.
+    # We'll work with 0-indexed target: index = k - 1 in descending order.
+    target = k - 1
+    left, right = 0, len(nums) - 1
 
-    def quickselect(left: int, right: int) -> int:
-        # Standard random pivot
+    while left <= right:
         pivot_idx = random.randint(left, right)
-        pivot_val = nums[pivot_idx]
+        pivot_idx = partition_desc(nums, left, right, pivot_idx)
 
-        # Move pivot to the end
-        nums[pivot_idx], nums[right] = nums[right], nums[pivot_val]
-
-        # Partition: elements < pivot go left, > pivot go right
-        store = left
-        for i in range(left, right):
-            if nums[i] < pivot_val:
-                nums[store], nums[i] = nums[i], nums[store]
-                store += 1
-
-        # Move pivot to its final position
-        nums[right], nums[store] = nums[store], nums[right]
-
-        # Decide which side to recurse into
-        if store == target_idx:
-            return nums[store]
-        elif target_idx < store:
-            return quickselect(left, store - 1)
+        if pivot_idx == target:
+            return nums[pivot_idx]
+        elif pivot_idx < target:
+            left = pivot_idx + 1
         else:
-            return quickselect(store + 1, right)
+            right = pivot_idx - 1
 
-    return quickselect(0, len(nums) - 1)
+    return -1  # should never reach here
+
+
+def partition_desc(arr: list[int], left: int, right: int, pivot_idx: int) -> int:
+    """Partition arr[left..right] around pivot (descending order).
+    Returns the final index of the pivot.
+    """
+    pivot_val = arr[pivot_idx]
+    # Move pivot to end
+    arr[pivot_idx], arr[right] = arr[right], arr[pivot_idx]
+
+    store_idx = left
+    for i in range(left, right):
+        if arr[i] > pivot_val:  # descending: larger elements go left
+            arr[store_idx], arr[i] = arr[i], arr[store_idx]
+            store_idx += 1
+
+    # Move pivot to its final place
+    arr[right], arr[store_idx] = arr[store_idx], arr[right]
+    return store_idx
 ```
+
+**Time Complexity:** O(n) average, O(n²) worst case (rare with random pivot).  
+**Space Complexity:** O(1) — in-place partitioning, no extra data structures.
 
 ---
 
-## Approach 3 — Optimal (Min-Heap of Size k)
+## Approach 3 — Alternative Optimal (Min-Heap of size k)
 
-**Idea:** Maintain a min-heap of size `k` over the array. After processing all elements, the smallest element in this heap (the root) is the kth largest.
-
-### Complexity
-- **Time:** O(n log k) — each heap operation is O(log k), and we do n operations.
-- **Space:** O(k) for the heap.
-
-### Code
+Use a min-heap of size k. Iterate through the array; keep the k largest elements in the heap. The top of the heap is the kth largest.
 
 ```python
 import heapq
 
-def findKthLargest_heap(nums: list[int], k: int) -> int:
-    heap = []
-    for num in nums:
-        heapq.heappush(heap, num)
-        if len(heap) > k:
-            heapq.heappop(heap)
+def find_kth_largest_heap(nums: list[int], k: int) -> int:
+    heap = nums[:k]
+    heapq.heapify(heap)  # min-heap of size k
+
+    for x in nums[k:]:
+        if x > heap[0]:
+            heapq.heapreplace(heap, x)
+
     return heap[0]
 ```
 
+**Time Complexity:** O(n log k) — each heap operation is O(log k).  
+**Space Complexity:** O(k) — the heap stores k elements.
+
 ---
 
-## Summary
+### Summary
 
-| Approach        | Time         | Space   | Notes                                     |
-|-----------------|--------------|---------|-------------------------------------------|
-| Sorting         | O(n log n)   | O(1)†   | Simple, good for small n                  |
-| Quickselect     | O(n) avg     | O(log n)| Optimal average — in-place               |
-| Min-Heap        | O(n log k)   | O(k)    | Good when k << n, no recursion            |
+| Approach    | Time         | Space   | Notes                              |
+|-------------|-------------|---------|------------------------------------|
+| Brute force | O(n log n)  | O(1)/O(n)| Simple, always correct            |
+| Quickselect | O(n) avg    | O(1)    | Mutates input, fast average       |
+| Min-heap    | O(n log k)  | O(k)    | No mutation, good for streaming   |
 
-† Python's Timsort uses O(n) auxiliary space in the worst case.
-
-LeetCode's expected optimal solution is **Quickselect** (or the heap approach).
+For k small relative to n, the heap approach can be very practical. Quickselect is the asymptotic winner.
