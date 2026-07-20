@@ -1,110 +1,110 @@
-# Day 10 — Kth Largest Element in an Array
+# Day 10 — Kth-Largest Element in an Array
 
-**Problem:** Given an integer array `nums` and an integer `k`, return the *kth largest element* in the array.
+**Question:** Given an integer array `nums` and an integer `k`, return the *kth* largest element in the array. Note that it is the kth largest element in the **sorted order**, not the kth distinct element. You must solve it in **O(n)** time on average.
 
-Note that it is the kth largest element in the sorted order, not the kth distinct element.
+- [LeetCode 215 — Kth Largest Element in an Array](https://leetcode.com/problems/kth-largest-element-in-an-array/)
 
 ---
 
 ## Approach 1 — Brute Force (Sorting)
 
-Sort the array in descending order, then pick the element at index `k-1`.
+**Idea:** Sort the entire array in descending order and pick the element at index `k-1`.
 
 ```python
-def find_kth_largest_brute(nums: list[int], k: int) -> int:
+def find_kth_largest_brute(nums, k):
     nums.sort(reverse=True)
     return nums[k - 1]
 ```
 
-**Time Complexity:** O(n log n) — dominated by sorting.  
-**Space Complexity:** O(1) or O(n) depending on the sort implementation (Python's Timsort uses O(n) auxiliary space in the worst case).
+### Complexity
+
+| Metric | Value |
+|---|---|
+| **Time** | **O(n log n)** — dominated by sorting |
+| **Space** | **O(1)** or **O(n)** depending on sort implementation (Python's Timsort uses O(n) auxiliary space in worst case) |
 
 ---
 
-## Approach 2 — Optimal (Quickselect / Hoare's Selection Algorithm)
+## Approach 2 — Optimal (QuickSelect, Hoare's Partition)
 
-Quickselect is a selection algorithm based on the partition step of Quicksort. It repeatedly partitions the array around a pivot until the pivot lands at the (k-1)th position (0-indexed for kth largest). Since we want the kth *largest*, we partition in descending order.
+**Idea:** Use the QuickSelect algorithm — a variant of QuickSort that only recurses into the partition containing the kth largest element. On average this runs in **O(n)** time.
 
-Average case is O(n), which is better than O(n log n) sorting.
+We look for the **(n - k)th** smallest element (0-indexed) so we don't have to reverse the comparison logic.
 
 ```python
 import random
 
-def find_kth_largest_optimal(nums: list[int], k: int) -> int:
-    # Convert to kth largest → kth smallest index for easier partitioning
-    # kth largest = nums[len - k] in ascending order
-    # But we can also partition in descending order.
-    # We'll work with 0-indexed target: index = k - 1 in descending order.
-    target = k - 1
-    left, right = 0, len(nums) - 1
+def find_kth_largest(nums, k):
+    n = len(nums)
+    target = n - k  # position of kth largest in sorted order (0-indexed)
 
-    while left <= right:
+    def quickselect(left, right):
+        # Choose a random pivot to avoid worst-case O(n²) on sorted input
         pivot_idx = random.randint(left, right)
-        pivot_idx = partition_desc(nums, left, right, pivot_idx)
+        pivot_val = nums[pivot_idx]
 
-        if pivot_idx == target:
-            return nums[pivot_idx]
-        elif pivot_idx < target:
-            left = pivot_idx + 1
+        # Move pivot to end
+        nums[pivot_idx], nums[right] = nums[right], nums[pivot_idx]
+
+        # Partition: move elements smaller than pivot to the left side
+        store_idx = left
+        for i in range(left, right):
+            if nums[i] < pivot_val:
+                nums[store_idx], nums[i] = nums[i], nums[store_idx]
+                store_idx += 1
+
+        # Restore pivot to its final position
+        nums[right], nums[store_idx] = nums[store_idx], nums[right]
+
+        # pivot is now at index store_idx
+        if store_idx == target:
+            return nums[store_idx]
+        elif store_idx < target:
+            return quickselect(store_idx + 1, right)
         else:
-            right = pivot_idx - 1
+            return quickselect(left, store_idx - 1)
 
-    return -1  # should never reach here
-
-
-def partition_desc(arr: list[int], left: int, right: int, pivot_idx: int) -> int:
-    """Partition arr[left..right] around pivot (descending order).
-    Returns the final index of the pivot.
-    """
-    pivot_val = arr[pivot_idx]
-    # Move pivot to end
-    arr[pivot_idx], arr[right] = arr[right], arr[pivot_idx]
-
-    store_idx = left
-    for i in range(left, right):
-        if arr[i] > pivot_val:  # descending: larger elements go left
-            arr[store_idx], arr[i] = arr[i], arr[store_idx]
-            store_idx += 1
-
-    # Move pivot to its final place
-    arr[right], arr[store_idx] = arr[store_idx], arr[right]
-    return store_idx
+    return quickselect(0, n - 1)
 ```
 
-**Time Complexity:** O(n) average, O(n²) worst case (rare with random pivot).  
-**Space Complexity:** O(1) — in-place partitioning, no extra data structures.
+### Complexity
+
+| Metric | Value |
+|---|---|
+| **Time** | **O(n) average**, **O(n²) worst-case** — random pivot makes the worst-case vanishingly unlikely |
+| **Space** | **O(1)** auxiliary (in-place partitioning) + **O(log n)** recursion stack on average |
 
 ---
 
 ## Approach 3 — Alternative Optimal (Min-Heap of size k)
 
-Use a min-heap of size k. Iterate through the array; keep the k largest elements in the heap. The top of the heap is the kth largest.
+**Idea:** Maintain a min-heap of size `k`. Push each element; if the heap exceeds size `k`, pop the smallest. At the end, the heap's top (root) is the kth largest element.
 
 ```python
 import heapq
 
-def find_kth_largest_heap(nums: list[int], k: int) -> int:
-    heap = nums[:k]
-    heapq.heapify(heap)  # min-heap of size k
-
-    for x in nums[k:]:
-        if x > heap[0]:
-            heapq.heapreplace(heap, x)
-
+def find_kth_largest_heap(nums, k):
+    heap = []
+    for num in nums:
+        heapq.heappush(heap, num)
+        if len(heap) > k:
+            heapq.heappop(heap)
     return heap[0]
 ```
 
-**Time Complexity:** O(n log k) — each heap operation is O(log k).  
-**Space Complexity:** O(k) — the heap stores k elements.
+### Complexity
+
+| Metric | Value |
+|---|---|
+| **Time** | **O(n log k)** — each push/pop on a heap of size `k` is O(log k) |
+| **Space** | **O(k)** — the heap stores at most `k` elements |
 
 ---
 
-### Summary
+## Summary
 
-| Approach    | Time         | Space   | Notes                              |
-|-------------|-------------|---------|------------------------------------|
-| Brute force | O(n log n)  | O(1)/O(n)| Simple, always correct            |
-| Quickselect | O(n) avg    | O(1)    | Mutates input, fast average       |
-| Min-heap    | O(n log k)  | O(k)    | No mutation, good for streaming   |
-
-For k small relative to n, the heap approach can be very practical. Quickselect is the asymptotic winner.
+| Approach | Time | Space | Notes |
+|---|---|---|---|
+| Sorting (Brute) | O(n log n) | O(1)–O(n) | Simplest, good enough for small inputs |
+| QuickSelect (Optimal) | O(n) avg / O(n²) worst | O(log n) stack | Best average-case, in-place |
+| Min-Heap of size k | O(n log k) | O(k) | Excellent when k << n |
